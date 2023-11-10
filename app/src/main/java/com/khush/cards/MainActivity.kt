@@ -128,7 +128,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         deleteBtn.setOnClickListener {
-            deletePopup("card")
+            if(cardModels.isNotEmpty()) {
+                deletePopup("card")
+            }else{
+                Toast.makeText(applicationContext, "There are no cards in this group!", Toast.LENGTH_SHORT).show()
+            }
         }
 
         deleteGroupBtn.setOnClickListener {
@@ -418,7 +422,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             if(type == "group") {
                 deleteGroup()
             }
-            if(type == "card") {}
+            if(type == "card") {
+                deleteCard()
+            }
             dialog.dismiss()
         }
 
@@ -443,10 +449,28 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     MainScope().launch {
                         adapter.remove(items[groupIndex])
                         adapter.notifyDataSetChanged()
-                        groupIndex -= 1
+                        groupIndex = 0
                         groupDropDown.setSelection(0)
                         saveGroupIndex()
+                        cardIndex = 0
+                        saveCardIndex()
+                        updateCardList()
                     }
+                }
+            }
+        }
+    }
+
+    private fun deleteCard(){
+        coroutineScope.launch {
+            if(!cardDao.isEmpty()) {
+                if(cardModels.isNotEmpty()) {
+                    cardDao.deleteCard(cardModels[cardIndex])
+                    if(cardIndex != 0) {
+                        cardIndex -= 1
+                        saveCardIndex()
+                    }
+                    updateCardList()
                 }
             }
         }
