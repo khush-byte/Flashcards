@@ -21,6 +21,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -104,6 +105,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     val groupId = groups[groupIndex].id
                     //Log.d("MyTag", groupId.toString())
                     val intent = Intent(this@MainActivity, CardActivity::class.java)
+                    intent.putExtra("action", "add")
                     intent.putExtra("groupId", groupId)
                     startActivity(intent)
                 }
@@ -111,12 +113,18 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         editBtn.setOnClickListener {
-            val intent = Intent(this, CardActivity::class.java)
-//            intent.putExtra("group", cardModels[cardIndex].group)
-//            intent.putExtra("word", cardModels[cardIndex].word)
-//            intent.putExtra("transcription", cardModels[cardIndex].transcription)
-//            intent.putExtra("translation", cardModels[cardIndex].transcription)
-            startActivity(intent)
+            if(cardModels.isNotEmpty()) {
+                val intent = Intent(this, CardActivity::class.java)
+                intent.putExtra("action", "edit")
+                intent.putExtra("groupId", cardModels[cardIndex].groupId)
+                intent.putExtra("cardId", cardModels[cardIndex].id)
+                intent.putExtra("word", cardModels[cardIndex].word)
+                intent.putExtra("transcription", cardModels[cardIndex].transcription)
+                intent.putExtra("translation", cardModels[cardIndex].translation)
+                startActivity(intent)
+            }else{
+                Toast.makeText(applicationContext, "There are no cards in this group!", Toast.LENGTH_SHORT).show()
+            }
         }
 
         deleteBtn.setOnClickListener {
@@ -138,6 +146,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if(groupIndex!=position){
+                    cardIndex = 0
+                }
                 groupIndex = position
                 saveGroupIndex()
                 updateCardList()
@@ -205,7 +216,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             if(cardDao.isEmpty()){
                 cardDao.insertCard(
-                    CardModel(0, 1, "hello", "[həˈləʊ]", "привет")
+                    CardModel(0, 1, "hello", "həˈləʊ", "привет")
                 )
             }
 
@@ -227,10 +238,15 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun initCard(){
         if(cardModels.isNotEmpty()) {
             englishWord.text = cardModels[cardIndex].word
-            transcription.text = cardModels[cardIndex].transcription
+            if(cardModels[cardIndex].transcription.isNotEmpty()) {
+                transcription.text = "[${cardModels[cardIndex].transcription}]"
+            }else{
+                transcription.text = ""
+            }
             translation.text = cardModels[cardIndex].translation
         }else{
             englishWord.text = ""
@@ -251,8 +267,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun updateCardList(){
         coroutineScope.launch {
-            cardIndex = 0
-
             val groups = groupDao.getGroups()
             val groupId = groups[groupIndex].id
             cardModels = cardDao.getCards(groupId)

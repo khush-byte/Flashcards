@@ -55,6 +55,7 @@ class GroupActivity : AppCompatActivity() {
                     val index = groups.size - 1
 
                     editor.putInt("groupIndex", index)
+                    editor.putInt("cardIndex", 0)
                     editor.apply()
                 }
 
