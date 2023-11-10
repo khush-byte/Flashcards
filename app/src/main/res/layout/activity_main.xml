@@ -4,11 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="#111212"
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/edit_btn"
         android:layout_width="0dp"
         android:layout_height="36dp"
         android:layout_marginStart="4dp"
@@ -26,13 +26,13 @@
         android:textColor="@color/button_selector_font"
         android:textSize="11.4sp"
         app:backgroundTint="@color/button_selector"
-        app:layout_constraintEnd_toStartOf="@+id/button3"
+        app:layout_constraintEnd_toStartOf="@+id/delete_btn"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/button"
+        app:layout_constraintStart_toEndOf="@+id/add_btn"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/delete_btn"
         android:layout_width="0dp"
         android:layout_height="36dp"
         android:layout_marginEnd="28dp"
@@ -50,11 +50,11 @@
         app:backgroundTint="@color/button_selector"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/button2"
-        app:layout_constraintTop_toTopOf="@+id/button2" />
+        app:layout_constraintStart_toEndOf="@+id/edit_btn"
+        app:layout_constraintTop_toTopOf="@+id/edit_btn" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/add_btn"
         android:layout_width="0dp"
         android:layout_height="36dp"
         android:layout_marginStart="28dp"
@@ -69,14 +69,14 @@
         android:textColor="@color/button_selector_font"
         android:textSize="11.4sp"
         app:backgroundTint="@color/button_selector"
-        app:layout_constraintEnd_toStartOf="@+id/button2"
+        app:layout_constraintEnd_toStartOf="@+id/edit_btn"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/button2" />
+        app:layout_constraintTop_toTopOf="@+id/edit_btn" />
 
     <Button
-        android:id="@+id/button4"
+        android:id="@+id/create_group_btn"
         android:layout_width="0dp"
         android:layout_height="36dp"
         android:layout_marginEnd="4dp"
@@ -91,14 +91,14 @@
         android:textColor="@color/button_selector_font"
         android:textSize="11.4sp"
         app:backgroundTint="@color/button_selector"
-        app:layout_constraintBottom_toBottomOf="@+id/button5"
-        app:layout_constraintEnd_toStartOf="@+id/button5"
+        app:layout_constraintBottom_toBottomOf="@+id/delete_group_btn"
+        app:layout_constraintEnd_toStartOf="@+id/delete_group_btn"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="@+id/button" />
+        app:layout_constraintStart_toStartOf="@+id/add_btn" />
 
     <Button
-        android:id="@+id/button5"
+        android:id="@+id/delete_group_btn"
         android:layout_width="0dp"
         android:layout_height="36dp"
         android:layout_marginBottom="30dp"
@@ -113,9 +113,9 @@
         android:textSize="11.4sp"
         app:backgroundTint="@color/button_selector"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/button3"
+        app:layout_constraintEnd_toEndOf="@+id/delete_btn"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/button4" />
+        app:layout_constraintStart_toEndOf="@+id/create_group_btn" />
 
     <TextView
         android:id="@+id/textView"
@@ -128,31 +128,31 @@
         android:text="Group"
         android:textColor="#C5C5C5"
         android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/button3"
-        app:layout_constraintTop_toBottomOf="@+id/button" />
+        app:layout_constraintEnd_toEndOf="@+id/delete_btn"
+        app:layout_constraintTop_toBottomOf="@+id/add_btn" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/clickField"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginLeft="16dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginLeft="14dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginRight="14dp"
         android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/button4"
+        app:layout_constraintBottom_toTopOf="@+id/create_group_btn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button2">
+        app:layout_constraintTop_toBottomOf="@+id/edit_btn">
 
         <androidx.cardview.widget.CardView
             android:id="@+id/cardBack"
             android:layout_width="match_parent"
-            android:layout_height="240dp"
-            android:background="@color/white"
-            app:cardBackgroundColor="@color/white"
+            android:layout_height="230dp"
+            android:background="#FFFDF9"
+            app:cardBackgroundColor="#FFFEFC"
             app:cardCornerRadius="4dp"
             app:cardElevation="2dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -167,13 +167,12 @@
                 android:layout_height="match_parent">
 
                 <TextView
-                    android:id="@+id/russion"
+                    android:id="@+id/translation"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-light"
-                    android:text="Привет"
                     android:textColor="#077987"
-                    android:textSize="24sp"
+                    android:textSize="26sp"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -187,9 +186,9 @@
         <androidx.cardview.widget.CardView
             android:id="@+id/cardFront"
             android:layout_width="match_parent"
-            android:layout_height="240dp"
-            android:background="@color/white"
-            app:cardBackgroundColor="@color/white"
+            android:layout_height="230dp"
+            android:background="#FFFDF9"
+            app:cardBackgroundColor="#FFFDF9"
             app:cardCornerRadius="4dp"
             app:cardElevation="2dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -208,9 +207,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-light"
-                    android:text="Hello"
                     android:textColor="#077987"
-                    android:textSize="24sp"
+                    android:textSize="26sp"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -218,21 +216,51 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintVertical_bias="0.5" />
+
+                <TextView
+                    android:id="@+id/transcription"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:textColor="#C17962"
+                    android:textSize="20sp"
+                    android:textStyle="normal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/english"
+                    app:layout_constraintVertical_bias="0.2" />
+
+                <ImageButton
+                    android:id="@+id/speak_btn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="#008F7878"
+                    android:src="@drawable/baseline_volume_up"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/transcription"
+                    app:layout_constraintVertical_bias="0.3"
+                    app:tint="@color/button_selector_font" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <Spinner
-        android:id="@+id/groupDropDown"
+        android:id="@+id/group_drop_down"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="-20dp"
         android:layout_marginRight="-20dp"
         android:gravity="end"
+        android:paddingEnd="32dp"
         android:paddingRight="32dp"
         app:layout_constraintEnd_toEndOf="@+id/textView"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        android:paddingEnd="32dp" />
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

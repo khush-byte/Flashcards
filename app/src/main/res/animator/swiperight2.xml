@@ -10,13 +10,13 @@
         android:valueFrom="600F"
         android:valueTo="0F"
         android:propertyName="translationX"
-        android:duration="160"
+        android:duration="180"
         />
     <objectAnimator
         android:valueFrom="0.0"
         android:valueTo="1.0"
         android:propertyName="alpha"
         android:startOffset="0"
-        android:duration="160"
+        android:duration="180"
         />
 </set>

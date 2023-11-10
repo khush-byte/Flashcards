@@ -3,23 +3,48 @@ package com.khush.cards
 import android.animation.AnimatorInflater
 import android.animation.AnimatorSet
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.Spinner
+import android.widget.TextView
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
+import androidx.room.Room
+import com.khush.cards.database.CardDao
+import com.khush.cards.database.CardDatabase
+import com.khush.cards.database.CardModel
+import com.khush.cards.database.GroupDao
+import com.khush.cards.database.GroupModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private lateinit var sharedPreference: SharedPreferences
     private lateinit var frontAnim: AnimatorSet
     private lateinit var backAnim: AnimatorSet
     private lateinit var swipeAnim: AnimatorSet
@@ -28,16 +53,35 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardBack: CardView
     private lateinit var groupDropDown: Spinner
     private lateinit var clickField: ConstraintLayout
+    private lateinit var addBtn: Button
+    private lateinit var editBtn: Button
+    private lateinit var deleteBtn: Button
+    private lateinit var createGroupBtn: Button
+    private lateinit var deleteGroupBtn: Button
+    private lateinit var englishWord: TextView
+    private lateinit var transcription: TextView
+    private lateinit var translation: TextView
+    private lateinit var speakBtn: ImageButton
+    private lateinit var cardDao: CardDao
+    private lateinit var groupDao: GroupDao
+    private lateinit var adapter: ArrayAdapter<String>
+    private lateinit var cardModels: List<CardModel>
+    private lateinit var items: MutableList<String>
+    private lateinit var editor: SharedPreferences.Editor
     var isFront = true
     var xDown = 0
     var xUp = 0
+    var cardIndex = 0
+    private var groupIndex = 0
+    private var tts: TextToSpeech? = null
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "CommitPrefEdits")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         initApp()
-        initGroupDropDown()
+        tts = TextToSpeech(applicationContext, this)
 
         clickField.setOnTouchListener(View.OnTouchListener { _, motionEvent ->
             when (motionEvent.action){
@@ -52,14 +96,179 @@ class MainActivity : AppCompatActivity() {
             }
             return@OnTouchListener true
         })
+
+        addBtn.setOnClickListener {
+            coroutineScope.launch {
+                if (!groupDao.isEmpty()) {
+                    val groups = groupDao.getGroups()
+                    val groupId = groups[groupIndex].id
+                    //Log.d("MyTag", groupId.toString())
+                    val intent = Intent(this@MainActivity, CardActivity::class.java)
+                    intent.putExtra("groupId", groupId)
+                    startActivity(intent)
+                }
+            }
+        }
+
+        editBtn.setOnClickListener {
+            val intent = Intent(this, CardActivity::class.java)
+//            intent.putExtra("group", cardModels[cardIndex].group)
+//            intent.putExtra("word", cardModels[cardIndex].word)
+//            intent.putExtra("transcription", cardModels[cardIndex].transcription)
+//            intent.putExtra("translation", cardModels[cardIndex].transcription)
+            startActivity(intent)
+        }
+
+        deleteBtn.setOnClickListener {
+            deletePopup("card")
+        }
+
+        deleteGroupBtn.setOnClickListener {
+            deletePopup("group")
+        }
+
+        createGroupBtn.setOnClickListener {
+            val intent = Intent(this, GroupActivity::class.java)
+            startActivity(intent)
+            this.finish()
+        }
+
+        groupDropDown.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+            }
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                groupIndex = position
+                saveGroupIndex()
+                updateCardList()
+            }
+        }
+
+        speakBtn.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                textToSpeech(englishWord.text.toString())
+            }
+        }
+    }
+
+    private fun initApp(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val window = window
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            window.statusBarColor = Color.parseColor("#111212")
+            window.navigationBarColor = Color.parseColor("#111212")
+        }
+
+        val scale:Float = applicationContext.resources.displayMetrics.density
+        cardFront = findViewById(R.id.cardFront)
+        cardBack = findViewById(R.id.cardBack)
+        clickField = findViewById(R.id.clickField)
+        addBtn = findViewById(R.id.add_btn)
+        editBtn = findViewById(R.id.edit_btn)
+        deleteBtn = findViewById(R.id.delete_btn)
+        createGroupBtn = findViewById(R.id.create_group_btn)
+        deleteGroupBtn = findViewById(R.id.delete_group_btn)
+        groupDropDown = findViewById(R.id.group_drop_down)
+        englishWord = findViewById(R.id.english)
+        transcription = findViewById(R.id.transcription)
+        translation = findViewById(R.id.translation)
+        speakBtn = findViewById(R.id.speak_btn)
+
+        cardFront.cameraDistance = 8000 * scale
+        cardBack.cameraDistance = 8000 * scale
+
+        frontAnim = AnimatorInflater.loadAnimator(applicationContext, R.animator.front) as AnimatorSet
+        backAnim = AnimatorInflater.loadAnimator(applicationContext, R.animator.back) as AnimatorSet
+
+        sharedPreference = applicationContext.getSharedPreferences("LocalMemory", Context.MODE_PRIVATE)
+        editor = sharedPreference.edit()
+
+        groupIndex = sharedPreference.getInt("groupIndex", 0)
+        cardIndex = sharedPreference.getInt("cardIndex", 0)
+
+        val db = Room.databaseBuilder(
+            applicationContext,
+            CardDatabase::class.java, "card_database"
+        ).build()
+
+        cardDao = db.cardDao()
+        groupDao = db.groupDao()
+
+        items = ArrayList()
+
+        coroutineScope.launch {
+            if(groupDao.isEmpty()){
+                groupDao.insertGroup(
+                    GroupModel(0, "new words")
+                )
+            }
+
+            if(cardDao.isEmpty()){
+                cardDao.insertCard(
+                    CardModel(0, 1, "hello", "[həˈləʊ]", "привет")
+                )
+            }
+
+            val groups = groupDao.getGroups()
+            for(group in groups){
+                items.add(group.group)
+            }
+
+            adapter = ArrayAdapter<String>(applicationContext, R.layout.spinner_item, items)
+            groupDropDown.adapter = adapter
+            groupDropDown.setSelection(groupIndex)
+
+            val groupId = groups[groupIndex].id
+            cardModels = cardDao.getCards(groupId)
+            cardIndex = sharedPreference.getInt("cardIndex", 0)
+
+            //Log.d("MyTag", cardModels.size.toString())
+            initCard()
+        }
+    }
+
+    private fun initCard(){
+        if(cardModels.isNotEmpty()) {
+            englishWord.text = cardModels[cardIndex].word
+            transcription.text = cardModels[cardIndex].transcription
+            translation.text = cardModels[cardIndex].translation
+        }else{
+            englishWord.text = ""
+            transcription.text = ""
+            translation.text = ""
+        }
+    }
+
+    private fun saveGroupIndex(){
+        editor.putInt("groupIndex", groupIndex)
+        editor.apply()
+    }
+
+    private fun saveCardIndex(){
+        editor.putInt("cardIndex", cardIndex)
+        editor.apply()
+    }
+
+    private fun updateCardList(){
+        coroutineScope.launch {
+            cardIndex = 0
+
+            val groups = groupDao.getGroups()
+            val groupId = groups[groupIndex].id
+            cardModels = cardDao.getCards(groupId)
+
+            MainScope().launch {
+                initCard()
+            }
+        }
     }
 
     private fun setSwipe(x: Int){
-        if(x<-100){
+        if(x<-50){
             //Log.d("MyTag", "left")
             setSwipeAnim("left")
         }
-        else if(x>150){
+        else if(x>50){
             //Log.d("MyTag", "right")
             setSwipeAnim("right")
         }
@@ -79,6 +288,18 @@ class MainActivity : AppCompatActivity() {
                 applicationContext,
                 R.animator.swipeleft2
             ) as AnimatorSet
+
+            swipeAnim.doOnEnd {
+                if(cardIndex > 0){
+                    cardIndex -= 1
+                    initCard()
+                }else{
+                    cardIndex = cardModels.size - 1
+                    initCard()
+                }
+                saveCardIndex()
+                //Log.d("MyTag", sharedPreference.getInt("cardIndex", 0).toString())
+            }
         }
         else if(swipeSide=="right") {
             swipeAnim = AnimatorInflater.loadAnimator(
@@ -89,6 +310,19 @@ class MainActivity : AppCompatActivity() {
                 applicationContext,
                 R.animator.swiperight2
             ) as AnimatorSet
+
+            swipeAnim.doOnEnd {
+                val cardSize = cardModels.size-1
+                if(cardIndex < cardSize){
+                    cardIndex+=1
+                    initCard()
+                }else{
+                    cardIndex = 0
+                    initCard()
+                }
+                Log.d("MyTag", cardIndex.toString())
+                saveCardIndex()
+            }
         }
 
         clickField.isEnabled = false
@@ -107,6 +341,7 @@ class MainActivity : AppCompatActivity() {
                     clickField.isEnabled = true
                 }
             }
+
         }else{
             swipeAnim.setTarget(cardBack)
             swipeAnimBack.setTarget(cardBack)
@@ -124,37 +359,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun initGroupDropDown() {
-        val items = arrayOf("test1", "test2", "test3")
-        val adapter = ArrayAdapter<String>(
-            this,
-            R.layout.spinner_item,
-            items
-        )
-        groupDropDown.adapter = adapter
-    }
-
-    private fun initApp(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val window = window
-            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-            window.statusBarColor = Color.BLACK
-            window.navigationBarColor = Color.BLACK
-        }
-
-        val scale:Float = applicationContext.resources.displayMetrics.density
-        cardFront = findViewById(R.id.cardFront)
-        cardBack = findViewById(R.id.cardBack)
-        clickField = findViewById(R.id.clickField)
-        groupDropDown = findViewById(R.id.groupDropDown)
-
-        cardFront.cameraDistance = 8000 * scale
-        cardBack.cameraDistance = 8000 * scale
-
-        frontAnim = AnimatorInflater.loadAnimator(applicationContext, R.animator.front) as AnimatorSet
-        backAnim = AnimatorInflater.loadAnimator(applicationContext, R.animator.back) as AnimatorSet
-    }
-
     private fun cardFlip(){
         if(isFront){
             frontAnim.setTarget(cardFront)
@@ -168,6 +372,7 @@ class MainActivity : AppCompatActivity() {
                 clickField.isEnabled = true
             }
             isFront = false
+            speakBtn.isEnabled = false
         }else{
             frontAnim.setTarget(cardBack)
             backAnim.setTarget(cardFront)
@@ -180,6 +385,82 @@ class MainActivity : AppCompatActivity() {
                 clickField.isEnabled = true
             }
             isFront = true
+            speakBtn.isEnabled = true
         }
+    }
+
+    private fun deletePopup(type: String){
+        val builder = AlertDialog.Builder(this)
+
+        builder.setTitle("Removal process")
+        if(type == "group") {
+            builder.setMessage("Do you really want to delete the selected group with all its cards?")
+        }
+        if(type == "card") {
+            builder.setMessage("Do you really want to delete the selected card?")
+        }
+
+        builder.setPositiveButton("YES") { dialog, _ ->
+            if(type == "group") {
+                deleteGroup()
+            }
+            if(type == "card") {}
+            dialog.dismiss()
+        }
+
+        builder.setNegativeButton(
+            "NO"
+        ) { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        val alert = builder.create()
+        alert.show()
+    }
+
+    private fun deleteGroup(){
+        coroutineScope.launch {
+            if (!groupDao.isEmpty()) {
+                val groups = groupDao.getGroups()
+                val groupSize = groups.size
+                if(groupSize > 1) {
+                    groupDao.deleteGroup(groups[groupIndex])
+
+                    MainScope().launch {
+                        adapter.remove(items[groupIndex])
+                        adapter.notifyDataSetChanged()
+                        groupIndex -= 1
+                        groupDropDown.setSelection(0)
+                        saveGroupIndex()
+                    }
+                }
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun textToSpeech(text: String){
+        tts!!.speak(text, TextToSpeech.QUEUE_FLUSH, null,"")
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            val result = tts!!.setLanguage(Locale.UK)
+
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e("MyTag","The Language not supported!")
+            }else{
+                tts!!.language = Locale.UK
+                tts!!.setSpeechRate(0.8F)
+            }
+        }
+    }
+
+    public override fun onDestroy() {
+        if (tts != null) {
+            tts!!.stop()
+            tts!!.shutdown()
+        }
+        super.onDestroy()
     }
 }
