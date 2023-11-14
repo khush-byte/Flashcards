@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Flashcards</string>
+    <string name="app_name">WordCards</string>
+    <string name="change_group"><u>change</u></string>
 </resources>

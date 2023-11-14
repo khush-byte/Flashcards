@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
@@ -19,6 +20,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.PopupWindow
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -59,6 +61,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var deleteBtn: Button
     private lateinit var createGroupBtn: Button
     private lateinit var deleteGroupBtn: Button
+    private lateinit var changeGroupBtn: Button
     private lateinit var englishWord: TextView
     private lateinit var transcription: TextView
     private lateinit var translation: TextView
@@ -164,6 +167,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 textToSpeech(englishWord.text.toString())
             }
         }
+
+        changeGroupBtn.setOnClickListener {
+            if(cardModels.isNotEmpty()) {
+                getGroupPopup()
+            }else{
+                Toast.makeText(applicationContext, "There are no cards in this group!", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun initApp(){
@@ -188,6 +199,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         transcription = findViewById(R.id.transcription)
         translation = findViewById(R.id.translation)
         speakBtn = findViewById(R.id.speak_btn)
+        changeGroupBtn = findViewById(R.id.change_group_btn)
 
         cardFront.cameraDistance = 8000 * scale
         cardBack.cameraDistance = 8000 * scale
@@ -490,8 +502,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }else{
                 tts!!.language = Locale.UK
                 tts!!.setSpeechRate(0.8F)
-                val am = getSystemService(AUDIO_SERVICE) as AudioManager
-                am.setStreamVolume(AudioManager.STREAM_MUSIC, 12, 0)
+//                val am = getSystemService(AUDIO_SERVICE) as AudioManager
+//                am.setStreamVolume(AudioManager.STREAM_MUSIC, 12, 0)
             }
         }
     }
@@ -502,5 +514,59 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             tts!!.shutdown()
         }
         super.onDestroy()
+    }
+
+    @SuppressLint("InflateParams")
+    private fun getGroupPopup(){
+        val popUpView = layoutInflater.inflate(R.layout.group_popup, null);
+        val popup = PopupWindow(popUpView, ConstraintLayout.LayoutParams.FILL_PARENT,
+        ConstraintLayout.LayoutParams.WRAP_CONTENT, true)
+        popup.animationStyle = android.R.style.Animation_Dialog
+        popup.showAtLocation(popUpView, Gravity.CENTER, 0, 0)
+
+        val popupGroupDropdown = popUpView.findViewById<Spinner>(R.id.popup_drop_down)
+        val popupApplyBtn = popUpView.findViewById<Button>(R.id.popup_apply_btn)
+
+//        var list: List<String> = items.toList()
+//        val popupItems = ArrayList(list)
+//        popupItems.removeAt(groupIndex)
+
+        val popupGroupAdapter = ArrayAdapter<String>(applicationContext, R.layout.spinner_item, items)
+        popupGroupDropdown.adapter = popupGroupAdapter
+        popupGroupDropdown.setSelection(groupIndex)
+
+        var popupGroupIndex = 0
+        popupGroupDropdown.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+            }
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                popupGroupIndex = position
+            }
+        }
+
+        popupApplyBtn.setOnClickListener {
+            moveCardToNewGroup(popupGroupIndex)
+            popup.dismiss()
+        }
+    }
+
+    private fun moveCardToNewGroup(popupGroupIndex: Int){
+        coroutineScope.launch {
+            if(!cardDao.isEmpty()) {
+                val groups = groupDao.getGroups()
+                val popupGroupId =  groups[popupGroupIndex].id
+
+                cardDao.updateCard(
+                    CardModel(cardModels[cardIndex].id, popupGroupId, cardModels[cardIndex].word, cardModels[cardIndex].transcription, cardModels[cardIndex].translation)
+                )
+
+                if(cardIndex != 0) {
+                    cardIndex -= 1
+                    saveCardIndex()
+                }
+                updateCardList()
+            }
+        }
     }
 }
