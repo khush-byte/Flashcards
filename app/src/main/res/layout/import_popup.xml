@@ -32,7 +32,7 @@
             android:layout_marginRight="32dp"
             android:fontFamily="@font/electrolize"
             android:gravity="center"
-            android:text="Please choose the group to which you would like to move the selected card"
+            android:text="Please select the option to communicate\nwith another app"
             android:textColor="#C5C5C5"
             android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
@@ -40,64 +40,12 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Spinner
-            android:id="@+id/popup_drop_down"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
-            android:layout_marginLeft="32dp"
-            android:layout_marginEnd="32dp"
-            android:layout_marginRight="32dp"
-            android:gravity="end"
-            android:paddingEnd="32dp"
-            android:paddingRight="32dp"
-            app:layout_constraintBottom_toTopOf="@+id/popup_apply_btn"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView6" />
-
         <Button
-            android:id="@+id/popup_apply_btn"
+            android:id="@+id/import_cancel_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="32dp"
             android:layout_marginRight="32dp"
-            android:layout_marginBottom="32dp"
-            android:background="@android:drawable/editbox_background_normal"
-            android:fontFamily="@font/electrolize"
-            android:paddingLeft="0dp"
-            android:paddingTop="2dp"
-            android:paddingRight="0dp"
-            android:paddingBottom="0dp"
-            android:text="APPLY"
-            android:textColor="@color/button_selector_font"
-            android:textSize="14sp"
-            app:backgroundTint="@android:color/transparent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <TextView
-            android:id="@+id/textView8"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/electrolize"
-            android:gravity="center"
-            android:text="|"
-            android:textColor="#C5C5C5"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@+id/popup_apply_btn"
-            app:layout_constraintEnd_toStartOf="@+id/popup_apply_btn"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/popup_import_btn"
-            app:layout_constraintTop_toTopOf="@+id/popup_apply_btn" />
-
-        <Button
-            android:id="@+id/popup_cancel_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="6dp"
-            android:layout_marginRight="6dp"
             android:layout_marginBottom="32dp"
             android:background="@android:drawable/editbox_background_normal"
             android:fontFamily="@font/electrolize"
@@ -110,7 +58,67 @@
             android:textSize="14sp"
             app:backgroundTint="@android:color/transparent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/textView8" />
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <Button
+            android:id="@+id/popup_export_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginLeft="16dp"
+            android:background="@android:drawable/editbox_background_normal"
+            android:fontFamily="@font/electrolize"
+            android:paddingLeft="0dp"
+            android:paddingTop="2dp"
+            android:paddingRight="0dp"
+            android:paddingBottom="0dp"
+            android:text="EXPORT GROUP"
+            android:textColor="@color/button_selector_font"
+            android:textSize="14sp"
+            app:backgroundTint="@android:color/transparent"
+            app:layout_constraintBottom_toBottomOf="@+id/popup_import_btn"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/textView7"
+            app:layout_constraintTop_toTopOf="@+id/popup_import_btn" />
+
+        <TextView
+            android:id="@+id/textView7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/electrolize"
+            android:gravity="center"
+            android:text="|"
+            android:textColor="#C5C5C5"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@+id/popup_import_btn"
+            app:layout_constraintEnd_toStartOf="@+id/popup_export_btn"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/popup_import_btn"
+            app:layout_constraintTop_toTopOf="@+id/popup_import_btn" />
+
+        <Button
+            android:id="@+id/popup_import_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginRight="16dp"
+            android:background="@android:drawable/editbox_background_normal"
+            android:fontFamily="@font/electrolize"
+            android:paddingLeft="0dp"
+            android:paddingTop="2dp"
+            android:paddingRight="0dp"
+            android:paddingBottom="0dp"
+            android:text="IMPORT GROUP"
+            android:textColor="@color/button_selector_font"
+            android:textSize="14sp"
+            app:backgroundTint="@android:color/transparent"
+            app:layout_constraintBottom_toTopOf="@+id/import_cancel_btn"
+            app:layout_constraintEnd_toStartOf="@+id/textView7"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView6" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

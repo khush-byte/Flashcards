@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.Gravity
@@ -62,6 +63,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var createGroupBtn: Button
     private lateinit var deleteGroupBtn: Button
     private lateinit var changeGroupBtn: Button
+    private lateinit var importBtn: ImageButton
     private lateinit var englishWord: TextView
     private lateinit var transcription: TextView
     private lateinit var translation: TextView
@@ -175,6 +177,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 Toast.makeText(applicationContext, "There are no cards in this group!", Toast.LENGTH_SHORT).show()
             }
         }
+
+        importBtn.setOnClickListener {
+            getImportPopup()
+        }
     }
 
     private fun initApp(){
@@ -200,6 +206,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         translation = findViewById(R.id.translation)
         speakBtn = findViewById(R.id.speak_btn)
         changeGroupBtn = findViewById(R.id.change_group_btn)
+        importBtn = findViewById(R.id.import_btn)
 
         cardFront.cameraDistance = 8000 * scale
         cardBack.cameraDistance = 8000 * scale
@@ -526,6 +533,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         val popupGroupDropdown = popUpView.findViewById<Spinner>(R.id.popup_drop_down)
         val popupApplyBtn = popUpView.findViewById<Button>(R.id.popup_apply_btn)
+        val popupCancelBtn = popUpView.findViewById<Button>(R.id.popup_cancel_btn)
 
 //        var list: List<String> = items.toList()
 //        val popupItems = ArrayList(list)
@@ -549,6 +557,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             moveCardToNewGroup(popupGroupIndex)
             popup.dismiss()
         }
+
+        popupCancelBtn.setOnClickListener {
+            popup.dismiss()
+        }
     }
 
     private fun moveCardToNewGroup(popupGroupIndex: Int){
@@ -567,6 +579,31 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 }
                 updateCardList()
             }
+        }
+    }
+
+    @SuppressLint("InflateParams")
+    private fun getImportPopup(){
+        val popUpView = layoutInflater.inflate(R.layout.import_popup, null);
+        val popup = PopupWindow(popUpView, ConstraintLayout.LayoutParams.FILL_PARENT,
+            ConstraintLayout.LayoutParams.WRAP_CONTENT, true)
+        popup.animationStyle = android.R.style.Animation_Dialog
+        popup.showAtLocation(popUpView, Gravity.CENTER, 0, 0)
+
+        val cancelImportBtn = popUpView.findViewById<Button>(R.id.import_cancel_btn)
+        val importGroupBtn = popUpView.findViewById<Button>(R.id.popup_import_btn)
+        val exportGroupBtn = popUpView.findViewById<Button>(R.id.popup_export_btn)
+
+        cancelImportBtn.setOnClickListener {
+            popup.dismiss()
+        }
+
+        importGroupBtn.setOnClickListener {
+
+        }
+
+        exportGroupBtn.setOnClickListener {
+
         }
     }
 }
