@@ -95,7 +95,7 @@ class CardActivity : AppCompatActivity() {
         val word = intent.getStringExtra("word")
         val transcription = intent.getStringExtra("transcription")
         val translation = intent.getStringExtra("translation")
-        Log.d("MyTag",cardId.toString()+groupId.toString()+word+transcription+translation)
+        //Log.d("MyTag",cardId.toString()+groupId.toString()+word+transcription+translation)
 
         if (word != null) {
             wordField.setText(word)

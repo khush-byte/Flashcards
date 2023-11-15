@@ -21,6 +21,9 @@ interface CardDao {
     @Delete
     suspend fun deleteCard(cardModel: CardModel)
 
+    @Query("DELETE FROM card_table WHERE groupId=:id")
+    suspend fun deleteCardByGroup(id: Int)
+
     @Query("SELECT (SELECT COUNT(*) FROM card_table) == 0")
     fun isEmpty(): Boolean
 }

@@ -3,14 +3,14 @@ package com.khush.cards
 import android.animation.AnimatorInflater
 import android.animation.AnimatorSet
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
-import android.media.AudioManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.Gravity
@@ -25,6 +25,7 @@ import android.widget.PopupWindow
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -43,7 +44,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
 import java.util.Locale
+import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -179,7 +187,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         importBtn.setOnClickListener {
-            getImportPopup()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                getImportPopup()
+            }
         }
     }
 
@@ -357,7 +367,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     cardIndex = 0
                     initCard()
                 }
-                Log.d("MyTag", cardIndex.toString())
+                //Log.d("MyTag", cardIndex.toString())
                 saveCardIndex()
             }
         }
@@ -463,6 +473,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val groups = groupDao.getGroups()
                 val groupSize = groups.size
                 if(groupSize > 1) {
+                    cardDao.deleteCardByGroup(groups[groupIndex].id)
                     groupDao.deleteGroup(groups[groupIndex])
 
                     MainScope().launch {
@@ -583,6 +594,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     @SuppressLint("InflateParams")
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun getImportPopup(){
         val popUpView = layoutInflater.inflate(R.layout.import_popup, null);
         val popup = PopupWindow(popUpView, ConstraintLayout.LayoutParams.FILL_PARENT,
@@ -599,11 +611,129 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         importGroupBtn.setOnClickListener {
-
+            importGroup()
         }
 
         exportGroupBtn.setOnClickListener {
+            val groupName = groupDropDown.selectedItem.toString()
+            val name = groupName.replace(" ", "_")+".json"
+            //Log.d("MyTag", name)
 
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"
+                putExtra(Intent.EXTRA_TITLE, name)
+            }
+
+            exportResultLauncher.launch(intent)
+            popup.dismiss()
         }
+    }
+
+    private val exportResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri: Uri? = result.data?.data
+            if (uri != null) {
+                saveJsonToUri(uri, applicationContext)
+            }
+        }
+    }
+
+    private fun saveJsonToUri(uri: Uri, context:Context) {
+        val jsonArray = JSONArray()
+        val finalJson = JSONObject()
+        val groupName = groupDropDown.selectedItem.toString()
+
+        try {
+            for(card in cardModels) {
+                val jsonObject = JSONObject()
+                jsonObject.put("word", card.word)
+                jsonObject.put("transcription", card.transcription)
+                jsonObject.put("translation", card.translation)
+                jsonArray.put(jsonObject)
+                finalJson.put("name", groupName)
+                finalJson.put("data", jsonArray)
+            }
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+
+        try {
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                // Write the video data to the output stream
+                outputStream.write(objectToBytArray(finalJson))
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun objectToBytArray(ob: Any): ByteArray {
+        return ob.toString().toByteArray()
+    }
+
+    private fun importGroup(){
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        importResultLauncher.launch(intent)
+    }
+
+    private val importResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri: Uri? = result.data?.data
+            if (uri != null) {
+                parseImportedJson(uri)
+            }
+        }
+    }
+
+    @SuppressLint("Recycle")
+    private fun parseImportedJson(uri:Uri){
+        try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val r = BufferedReader(InputStreamReader(inputStream))
+            val total = StringBuilder()
+            while (true) {
+                val line = r.readLine() ?: break
+                total.append(line).append('\n')
+            }
+            val result = total.toString()
+            val mainJson = JSONObject(result)
+            val jsonArray: JSONArray = mainJson.getJSONArray("data")
+            //Log.d("MyTag", mainJson.getString("name"))
+
+            coroutineScope.launch {
+                groupDao.insertGroup(
+                    GroupModel(0, mainJson.getString("name"))
+                )
+                val groups = groupDao.getGroups()
+                val index = groups.size - 1
+
+                editor.putInt("groupIndex", index)
+                editor.putInt("cardIndex", 0)
+                editor.apply()
+                //Log.d("MyTag",index.toString())
+
+                for (i in 0 until jsonArray.length()) {
+                    val json = jsonArray.getJSONObject(i)
+
+                    cardDao.insertCard(
+                        CardModel(0, groups[index].id, json.getString("word"), json.getString("transcription"), json.getString("translation"))
+                    )
+                }
+
+                restartApp()
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun restartApp(){
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        this.finish()
     }
 }
