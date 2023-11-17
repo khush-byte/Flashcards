@@ -1,4 +1,20 @@
 <resources>
     <string name="app_name">WordCards</string>
     <string name="change_group"><u>change</u></string>
+    <string name="hint"><u>change</u></string>
+
+    <string-array name="type_name">
+        <item>Please choose the word type…</item>
+        <item>noun</item>
+        <item>pronoun</item>
+        <item>verb</item>
+        <item>adverb</item>
+        <item>adjective</item>
+        <item>preposition</item>
+        <item>conjunction</item>
+        <item>interjection</item>
+        <item>phrase</item>
+        <item>idiom</item>
+        <item>other</item>
+    </string-array>
 </resources>

@@ -19,5 +19,8 @@ data class CardModel(
     var transcription: String,
 
     @ColumnInfo(name = "translation")
-    var translation: String
+    var translation: String,
+
+    @ColumnInfo(name = "type")
+    var type: String
 )

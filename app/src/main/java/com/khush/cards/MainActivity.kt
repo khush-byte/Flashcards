@@ -50,6 +50,7 @@ import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
+import java.lang.Exception
 import java.util.Locale
 import kotlin.system.exitProcess
 
@@ -75,6 +76,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var englishWord: TextView
     private lateinit var transcription: TextView
     private lateinit var translation: TextView
+    private lateinit var wordType: TextView
     private lateinit var speakBtn: ImageButton
     private lateinit var cardDao: CardDao
     private lateinit var groupDao: GroupDao
@@ -134,6 +136,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 intent.putExtra("word", cardModels[cardIndex].word)
                 intent.putExtra("transcription", cardModels[cardIndex].transcription)
                 intent.putExtra("translation", cardModels[cardIndex].translation)
+                intent.putExtra("type", cardModels[cardIndex].type)
                 startActivity(intent)
             }else{
                 Toast.makeText(applicationContext, "There are no cards in this group!", Toast.LENGTH_SHORT).show()
@@ -217,6 +220,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         speakBtn = findViewById(R.id.speak_btn)
         changeGroupBtn = findViewById(R.id.change_group_btn)
         importBtn = findViewById(R.id.import_btn)
+        wordType = findViewById(R.id.word_type)
 
         cardFront.cameraDistance = 8000 * scale
         cardBack.cameraDistance = 8000 * scale
@@ -249,7 +253,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             if(cardDao.isEmpty()){
                 cardDao.insertCard(
-                    CardModel(0, 1, "hello", "həˈləʊ", "привет")
+                    CardModel(0, 1, "hello", "həˈləʊ", "привет", "noun")
                 )
             }
 
@@ -281,10 +285,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 transcription.text = ""
             }
             translation.text = cardModels[cardIndex].translation
+            wordType.text = cardModels[cardIndex].type
         }else{
             englishWord.text = ""
             transcription.text = ""
             translation.text = ""
+            wordType.text = ""
         }
     }
 
@@ -311,11 +317,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun setSwipe(x: Int){
-        if(x<-50){
+        if(x<-10){
             //Log.d("MyTag", "left")
             setSwipeAnim("left")
         }
-        else if(x>50){
+        else if(x>10){
             //Log.d("MyTag", "right")
             setSwipeAnim("right")
         }
@@ -520,8 +526,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }else{
                 tts!!.language = Locale.UK
                 tts!!.setSpeechRate(0.8F)
-//                val am = getSystemService(AUDIO_SERVICE) as AudioManager
-//                am.setStreamVolume(AudioManager.STREAM_MUSIC, 12, 0)
             }
         }
     }
@@ -545,10 +549,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val popupGroupDropdown = popUpView.findViewById<Spinner>(R.id.popup_drop_down)
         val popupApplyBtn = popUpView.findViewById<Button>(R.id.popup_apply_btn)
         val popupCancelBtn = popUpView.findViewById<Button>(R.id.popup_cancel_btn)
-
-//        var list: List<String> = items.toList()
-//        val popupItems = ArrayList(list)
-//        popupItems.removeAt(groupIndex)
 
         val popupGroupAdapter = ArrayAdapter<String>(applicationContext, R.layout.spinner_item, items)
         popupGroupDropdown.adapter = popupGroupAdapter
@@ -581,7 +581,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 val popupGroupId =  groups[popupGroupIndex].id
 
                 cardDao.updateCard(
-                    CardModel(cardModels[cardIndex].id, popupGroupId, cardModels[cardIndex].word, cardModels[cardIndex].transcription, cardModels[cardIndex].translation)
+                    CardModel(cardModels[cardIndex].id, popupGroupId, cardModels[cardIndex].word, cardModels[cardIndex].transcription, cardModels[cardIndex].translation, cardModels[cardIndex].type)
                 )
 
                 if(cardIndex != 0) {
@@ -650,6 +650,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 jsonObject.put("word", card.word)
                 jsonObject.put("transcription", card.transcription)
                 jsonObject.put("translation", card.translation)
+                jsonObject.put("type", card.type)
                 jsonArray.put(jsonObject)
                 finalJson.put("name", groupName)
                 finalJson.put("data", jsonArray)
@@ -719,8 +720,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 for (i in 0 until jsonArray.length()) {
                     val json = jsonArray.getJSONObject(i)
 
+                    var type = ""
+                    type = try {
+                        json.getString("type")
+                    }catch(e: Exception) {""}
+
                     cardDao.insertCard(
-                        CardModel(0, groups[index].id, json.getString("word"), json.getString("transcription"), json.getString("translation"))
+                        CardModel(0, groups[index].id, json.getString("word"), json.getString("transcription"), json.getString("translation"), type)
                     )
                 }
 
