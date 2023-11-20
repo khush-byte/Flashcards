@@ -40,7 +40,7 @@
         android:textColor="#01696E"
         android:textSize="22sp"
         android:textStyle="bold"
-        android:digits="abcdefghijklmnopqrstuvwxyz1234567890 "
+        android:digits="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890 "
         app:layout_constraintBottom_toTopOf="@+id/create_btn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
